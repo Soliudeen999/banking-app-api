@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\AccountCurrency;
+use App\Enums\AccountType;
 use App\Mail\VerificationEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -48,6 +50,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'type' => AccountType::class,
+            'currency' => AccountCurrency::class,
         ];
     }
 
@@ -72,5 +76,10 @@ class User extends Authenticatable implements MustVerifyEmail
 
         if(!$this->hasVerifiedEmail())
             Mail::to($this)->send(new VerificationEmail($code, $this->name));
+    }
+
+    public function scopeWhereEmailIs($query, $email)
+    {
+        return $query->where('email', $email);
     }
 }

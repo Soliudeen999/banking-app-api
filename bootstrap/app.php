@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,5 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => $exception->getMessage()
                 ],  400);
             }
+
+            if($exception instanceof ModelNotFoundException){
+                return response()->json([
+                    'message' => 'Resource not found for: ' . basename($exception->getModel())
+                ],  400);
+            }
+
         });
     })->create();

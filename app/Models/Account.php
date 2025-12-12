@@ -19,6 +19,13 @@ class Account extends Model
         'status',
     ];
 
+    public function casts(): array
+    {
+        return [
+            //
+        ];
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
