@@ -79,7 +79,7 @@ class AuthController extends Controller
 
     public function verifyEmail(VerifyEmailRequest $request): JsonResponse
     {
-        /** @var App\Models\User $user */
+        /** @var \App\Models\User $user */
         $user = $request->user();
 
         $otp = $user->otps()

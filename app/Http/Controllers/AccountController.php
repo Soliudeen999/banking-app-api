@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\InsufficientBalanceException;
+use App\Http\Requests\Account\IntraBankTransferRequest;
 use App\Http\Requests\Account\StoreAccountRequest;
 use App\Models\Account;
 use Illuminate\Http\JsonResponse;
@@ -73,18 +75,36 @@ class AccountController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Account $account)
     {
-        //
+        $account->delete();
+        return response()->json([
+           'message' => 'Accout deleted tem '
+        ]);
+    }
+
+    public function intraBankTransfer(IntraBankTransferRequest $request, Account $account)
+    {
+        $data = $request->validated();
+
+        if(
+            $account->main_balance < $data['amount']
+        ){
+            throw ValidationException::withMessages(['amount' => 'Insufficient Balance']);
+        };
+
+        return response()->json(['message' => 'successfull']);
+    }
+
+    public function forceDelete(string|int $account)
+    {
+        $account = Account::query()->onlyTrashed()->findOrFail($account);
+        $account->forceDelete();
+
+        return response()->json([
+           'message' => 'Accout deleted tem '
+        ]);
     }
 }
