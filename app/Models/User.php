@@ -16,7 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -37,7 +37,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
-        'transaction_pin'
+        'transaction_pin',
     ];
 
     /**
@@ -71,11 +71,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
         $this->otps()->create([
             'code' => $code,
-            'expires_at' => now()->addMinutes(5)
+            'expires_at' => now()->addMinutes(5),
         ]);
 
-        if(!$this->hasVerifiedEmail())
+        if (! $this->hasVerifiedEmail()) {
             Mail::to($this)->send(new VerificationEmail($code, $this->name));
+        }
     }
 
     public function scopeWhereEmailIs($query, $email)

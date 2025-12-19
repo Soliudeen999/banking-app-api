@@ -16,7 +16,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Current User Info',
-            'data' => $user
+            'data' => $user,
         ]);
     }
 

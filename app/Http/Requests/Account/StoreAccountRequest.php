@@ -33,8 +33,8 @@ class StoreAccountRequest extends FormRequest
     public function prepareForValidation()
     {
         $this->mergeIfMissing([
-           'currency' => 'NGN',
-           'type' => 'savings'
+            'currency' => 'NGN',
+            'type' => 'savings',
         ]);
     }
 }

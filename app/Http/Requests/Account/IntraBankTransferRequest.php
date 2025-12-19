@@ -4,6 +4,7 @@ namespace App\Http\Requests\Account;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class IntraBankTransferRequest extends FormRequest
 {
@@ -24,7 +25,7 @@ class IntraBankTransferRequest extends FormRequest
     {
         $account = $this->route()->parameter('account');
 
-        $maxTransferrableAmount = match($account->tier){
+        $maxTransferrableAmount = match ($account->tier) {
             1 => 50000,
             2 => 500000,
             default => 0
@@ -35,9 +36,32 @@ class IntraBankTransferRequest extends FormRequest
                 'required',
                 'numeric',
                 'min:10',
-                Rule::unless($maxTransferrableAmount == 0, ['max:' . $maxTransferrableAmount])
+                Rule::unless($maxTransferrableAmount == 0, ['max:'.$maxTransferrableAmount]),
             ],
-            'account_number' => ['required', 'min:10', 'string', 'max:10', 'exists:accounts,account_number']
+            'account_number' => ['required', 'min:10', 'string', 'max:10', 'exists:accounts,account_number'],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function(Validator $validator){
+                $account = $this->route()->parameter('account');
+                $destinationAccount = $this->input('account_number');
+
+                if($account->account_number === $destinationAccount){
+                    $validator->errors()->add('account_number', 'You can not use same account for sending and receiving');
+                }
+            },
+
+            function(Validator $validator){
+                $account = $this->route()->parameter('account');
+                $amountToSend = $this->input('amount');
+
+                if($account->main_balance < $amountToSend){
+                    $validator->errors()->add('amount', 'Insufficient balance for this transaction');
+                }
+            }
         ];
     }
 }

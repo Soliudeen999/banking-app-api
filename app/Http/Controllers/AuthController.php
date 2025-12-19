@@ -25,21 +25,23 @@ class AuthController extends Controller
 
         $user = User::where('email', $data['email'])->first();
 
-        if(!$user)
+        if (! $user) {
             throw ValidationException::withMessages(['email' => 'Invalid Credentials']);
+        }
 
-        if(!Hash::check($data['password'], $user->password))
+        if (! Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages(['email' => 'Incorrect Login Credentials']);
+        }
 
         Auth::login($user);
 
         $token = $user->createToken('access_token')->plainTextToken;
 
         return response()->json([
-           'message' => 'Login successful',
-           'data' => [
+            'message' => 'Login successful',
+            'data' => [
                 'user' => $user,
-                'token' => $token
+                'token' => $token,
             ],
         ]);
     }
@@ -50,8 +52,9 @@ class AuthController extends Controller
 
         $data['password'] = Hash::make($data['password']);
 
-        $user = DB::transaction(function() use($data){
+        $user = DB::transaction(function () use ($data) {
             $user = User::create($data);
+
             return $user;
         });
 
@@ -59,11 +62,11 @@ class AuthController extends Controller
         event(new Registered(user: $user));
 
         return response()->json([
-           'message' => 'Registration Completed',
-           'data' => [
+            'message' => 'Registration Completed',
+            'data' => [
                 'user' => $user,
-                'token' => $user->createToken('access_token')->plainTextToken
-            ]
+                'token' => $user->createToken('access_token')->plainTextToken,
+            ],
         ]);
     }
 
@@ -73,7 +76,7 @@ class AuthController extends Controller
         $user->sendEmailVerificationNotification();
 
         return response()->json([
-            'message' => 'Verification code has been sent again. check your email'
+            'message' => 'Verification code has been sent again. check your email',
         ]);
     }
 
@@ -83,38 +86,38 @@ class AuthController extends Controller
         $user = $request->user();
 
         $otp = $user->otps()
-                ->where('type', 'verification')
-                ->where('code', $request->validated('otp'))
-                ->latest()
-                ->first();
+            ->where('type', 'verification')
+            ->where('code', $request->validated('otp'))
+            ->latest()
+            ->first();
 
-        if(!$otp){
+        if (! $otp) {
             throw ValidationException::withMessages(['otp' => 'Invalid Otp']);
         }
 
-        if($otp->isExpired()){
+        if ($otp->isExpired()) {
             throw ValidationException::withMessages(['otp' => 'Otp has expired']);
         }
 
         $user->markEmailAsVerified();
 
         return response()->json([
-           'message' => 'Verification Successfull',
-           'data' => [
+            'message' => 'Verification Successfull',
+            'data' => [
                 'user' => auth()->user(),
-            ]
+            ],
         ]);
     }
 
     public function forgetPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'email' => ['required', 'email']
+            'email' => ['required', 'email'],
         ]);
 
         $user = User::query()->whereEmailIs($data['email'])->first();
 
-        if($user){
+        if ($user) {
             $token = random_int(1000000, 9999999);
             $user->otps()->create([
                 'code' => $token,
@@ -123,26 +126,27 @@ class AuthController extends Controller
             $user->notify((new SendResetPasswordTokenNotification($token))->delay(now()));
         }
 
-        return response()->json(['message' => 'Email sent successfully'], 200, ['APP_USER_AVAI' => !!$user]);
+        return response()->json(['message' => 'Email sent successfully'], 200, ['APP_USER_AVAI' => (bool) $user]);
     }
 
     public function resetPassword(Request $request): JsonResponse
     {
         $data = $request->validate([
-           'email' => ['required', 'email', 'exists:users,email'],
-           'otp' => ['required', 'string', 'min:7'],
-           'password' => [Password::default(), 'confirmed', 'required']
+            'email' => ['required', 'email', 'exists:users,email'],
+            'otp' => ['required', 'string', 'min:7'],
+            'password' => [Password::default(), 'confirmed', 'required'],
         ]);
 
         $otp = Otp::query()
-                ->where('code', $data['otp'])
-                ->whereHas('user', fn($q) => $q->where('email', $data['email']))
-                ->first();
+            ->where('code', $data['otp'])
+            ->whereHas('user', fn ($q) => $q->where('email', $data['email']))
+            ->first();
 
-        if(!$otp)
+        if (! $otp) {
             throw ValidationException::withMessages(['otp' => 'Invalid otp']);
+        }
 
-        if($otp->isExpired()){
+        if ($otp->isExpired()) {
             throw ValidationException::withMessages(['otp' => 'Otp has expired. try and get new']);
         }
 

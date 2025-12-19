@@ -36,7 +36,7 @@ class RegisterRequest extends FormRequest
     public function messages()
     {
         return [
-            'gender.in' => 'The selected gender is not valid. Options are (male,female,others)'
+            'gender.in' => 'The selected gender is not valid. Options are (male,female,others)',
         ];
     }
 }

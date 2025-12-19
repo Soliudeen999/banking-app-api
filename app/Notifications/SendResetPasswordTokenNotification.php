@@ -3,7 +3,6 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -35,8 +34,7 @@ class SendResetPasswordTokenNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->view('mails.forgot-password', ['code' => $this->token]);
-
+            ->view('mails.forgot-password', ['code' => $this->token]);
 
         // ->line('The introduction to the notification.')
         //     ->action('Notification Action', url('/'))

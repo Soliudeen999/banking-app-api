@@ -17,18 +17,18 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->renderable(function(Throwable $exception, $request) {
+        $exceptions->renderable(function (Throwable $exception, $request) {
 
-            if($exception instanceof HttpException){
+            if ($exception instanceof HttpException) {
                 return response()->json([
-                    'message' => $exception->getMessage()
-                ],  400);
+                    'message' => $exception->getMessage(),
+                ], 400);
             }
 
-            if($exception instanceof ModelNotFoundException){
+            if ($exception instanceof ModelNotFoundException) {
                 return response()->json([
-                    'message' => 'Resource not found for: ' . basename($exception->getModel())
-                ],  400);
+                    'message' => 'Resource not found for: '.basename($exception->getModel()),
+                ], 400);
             }
 
         });

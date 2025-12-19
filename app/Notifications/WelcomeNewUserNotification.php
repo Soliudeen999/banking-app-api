@@ -2,7 +2,6 @@
 
 namespace App\Notifications;
 
-use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -51,7 +50,7 @@ class WelcomeNewUserNotification extends Notification implements ShouldQueue
         return [
             'title' => 'Welcome To Our Bank',
             'body' => "Dear {$notifiable->name}, We are happy to have you has our new customer and we promised to deliver good services to you. Thanks",
-            'meta' => []
+            'meta' => [],
         ];
     }
 }

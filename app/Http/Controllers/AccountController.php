@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\InsufficientBalanceException;
 use App\Http\Requests\Account\IntraBankTransferRequest;
 use App\Http\Requests\Account\StoreAccountRequest;
 use App\Models\Account;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AccountController extends Controller
@@ -18,12 +17,12 @@ class AccountController extends Controller
     public function index()
     {
         $account = Account::query()
-                    ->where('user_id', auth()->id())
-                    ->get();
+            ->where('user_id', auth()->id())
+            ->get();
 
         return response()->json([
             'message' => 'Accounts retrieved successfully',
-            'data' => $account
+            'data' => $account,
         ]);
     }
 
@@ -35,11 +34,11 @@ class AccountController extends Controller
         $data = $request->validated();
 
         $currentUserAccountForThisType = Account::query()
-                                ->where('user_id', auth()->id())
-                                ->whereType($data['type'])
-                                ->first();
+            ->where('user_id', auth()->id())
+            ->whereType($data['type'])
+            ->first();
 
-        if($currentUserAccountForThisType){
+        if ($currentUserAccountForThisType) {
             throw ValidationException::withMessages(['type' => 'You already have this type of account']);
         }
 
@@ -47,7 +46,7 @@ class AccountController extends Controller
 
         $notExisting = true;
 
-        while($notExisting){
+        while ($notExisting) {
             $accountNo = random_int(1000000000, 9999999999);
             $notExisting = Account::query()->where('account_number', $accountNo)->exists();
         }
@@ -59,7 +58,7 @@ class AccountController extends Controller
 
         return response()->json([
             'message' => 'Account Created Successfully',
-            'data' => $account
+            'data' => $account,
         ]);
     }
 
@@ -70,7 +69,7 @@ class AccountController extends Controller
     {
         return response()->json([
             'message' => 'Account retrieved successfully.',
-            'data' => $account->loadMissing('user:id,name')
+            'data' => $account->loadMissing('user:id,name'),
         ]);
     }
 
@@ -80,8 +79,9 @@ class AccountController extends Controller
     public function destroy(Account $account)
     {
         $account->delete();
+
         return response()->json([
-           'message' => 'Accout deleted tem '
+            'message' => 'Accout deleted tem ',
         ]);
     }
 
@@ -89,11 +89,30 @@ class AccountController extends Controller
     {
         $data = $request->validated();
 
-        if(
-            $account->main_balance < $data['amount']
-        ){
-            throw ValidationException::withMessages(['amount' => 'Insufficient Balance']);
-        };
+        DB::transaction(function() use ($data, $account) {
+            $account->update([
+                'main_balance' => $account->main_balance - $data['amount'],
+                'ledger_balance' => $account->ledger_balance - $data['amount'],
+                'debits' => $account->debits + $data['amount']
+            ]);
+
+            $destinationAccount = Account::where('account_number', '=', $data['account_number'])->first();
+
+            $destinationAccount->update([
+                'main_balance' => $destinationAccount->main_balance + $data['amount'],
+                'ledger_balance' => $destinationAccount->ledger_balance + $data['amount'],
+                'credits' => $destinationAccount->credits + $data['amount']
+            ]);
+
+            // Register the transaction with NIPS..
+
+            $account->transactions()->create([
+                'type' => 'debit',
+                'amount' => $data['amount'],
+                'balance_before' => $account->main_balance,
+                'balance_after' => $account->main_balance + $data['amount']
+            ]);
+        });
 
         return response()->json(['message' => 'successfull']);
     }
@@ -104,7 +123,7 @@ class AccountController extends Controller
         $account->forceDelete();
 
         return response()->json([
-           'message' => 'Accout deleted tem '
+            'message' => 'Accout deleted tem ',
         ]);
     }
 }

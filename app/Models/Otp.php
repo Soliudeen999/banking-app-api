@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class Otp extends Model
 {
     protected $fillable = [
-        'user_id', 'code', 'expires_at', 'status', 'type'
+        'user_id', 'code', 'expires_at', 'status', 'type',
     ];
 
     public function casts()
     {
         return [
-            'expires_at' => 'datetime'
+            'expires_at' => 'datetime',
         ];
     }
 
