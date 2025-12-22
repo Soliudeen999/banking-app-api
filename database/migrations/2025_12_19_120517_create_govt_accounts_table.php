@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('govt_accounts', function (Blueprint $table) {
             $table->id();
+            $table->string('account_number');
+            $table->string('bank_code');
+            $table->string('account_name');
+            $table->decimal('balance', 15, 2)->default(0);
+            $table->string('status')->default('active');
+            $table->string('account_type')->default('savings');
             $table->timestamps();
         });
     }

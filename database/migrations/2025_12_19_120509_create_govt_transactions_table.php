@@ -13,6 +13,16 @@ return new class extends Migration
     {
         Schema::create('govt_transactions', function (Blueprint $table) {
             $table->id();
+            $table->string('reference')->unique();
+            $table->string('from_acct_number');
+            $table->string('from_bank_code');
+
+            $table->string('to_acct_number');
+            $table->string('to_bank_code');
+
+            $table->decimal('amount', 15, 2);
+            $table->string('status'); // receievd/sent/acknowledge
+            $table->text('narration')->nullable();
             $table->timestamps();
         });
     }
