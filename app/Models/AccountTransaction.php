@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AccountTransaction extends Model
 {
@@ -15,13 +17,18 @@ class AccountTransaction extends Model
         'narration',
         'reference',
         'status',
-        'to_account_number',
-        'to_bank_name',
-        'to_account_name',
+        'related_account_number',
+        'related_bank_code',
+        'related_account_name',
     ];
 
-    public function account()
+    public function sourceAccount(): BelongsTo
     {
-        return $this->belongsTo(Account::class);
+        return $this->belongsTo(Account::class, 'account_id');
+    }
+
+    public function destinationBank(): BelongsTo
+    {
+        return $this->belongsTo(Bank::class, 'related_bank_code', 'code');
     }
 }

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Account\IntraBankTransferRequest;
 use App\Http\Requests\Account\StoreAccountRequest;
+use App\Jobs\RecordTransactionWithGovtJob;
 use App\Models\Account;
+use App\Models\AccountTransaction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -81,17 +83,19 @@ class AccountController extends Controller
         $account->delete();
 
         return response()->json([
-            'message' => 'Accout deleted tem ',
+            'message' => 'Accout deleted temporarily.',
         ]);
     }
 
-    public function intraBankTransfer(IntraBankTransferRequest $request, Account $account)
+    public function intraBankTransfer(IntraBankTransferRequest $request, Account $account): JsonResponse
     {
         $data = $request->validated();
 
-        DB::transaction(function() use ($data, $account) {
+        $transactions = DB::transaction(function() use ($data, $account) {
+            $mainBalance = $account->main_balance;
+
             $account->update([
-                'main_balance' => $account->main_balance - $data['amount'],
+                'main_balance' => $mainBalance - $data['amount'],
                 'ledger_balance' => $account->ledger_balance - $data['amount'],
                 'debits' => $account->debits + $data['amount']
             ]);
@@ -104,17 +108,42 @@ class AccountController extends Controller
                 'credits' => $destinationAccount->credits + $data['amount']
             ]);
 
-            // Register the transaction with NIPS..
+            // Register the transaction with NIBSS..
 
-            $account->transactions()->create([
+            $sendingAccountTrnx = $account->transactions()->create([
                 'type' => 'debit',
+                'reference' => uniqid(prefix: 'txn_' . '001122', more_entropy: true),
                 'amount' => $data['amount'],
-                'balance_before' => $account->main_balance,
-                'balance_after' => $account->main_balance + $data['amount']
+                'balance_before' => $mainBalance,
+                'balance_after' => $account->main_balance, // The new balance is here after update
+                'narration' => $data['narration'] ?? 'Intra bank transfer',
+                'status' => 'completed',
+                'related_account_number' => $destinationAccount->account_number,
+                'related_bank_code' => '001122',
+                'related_account_name' => $destinationAccount->user->name,
             ]);
+
+            $receivingAccountTrnx = AccountTransaction::create([
+                'account_id' => $destinationAccount->id,
+                'reference' => uniqid(prefix: 'txn_' . '001122' . $destinationAccount->id, more_entropy: true),
+                'type' => 'credit',
+                'balance_before' => $destinationAccount->main_balance - $data['amount'],
+                'balance_after' => $destinationAccount->main_balance,
+                'narration' => $data['narration'] ?? 'Intra bank transfer',
+                'amount' => $data['amount'],
+                'status' => 'completed',
+                'related_account_number' => $account->account_number,
+                'related_bank_code' => '001122',
+                'related_account_name' => $account->user->name,
+            ]);
+
+            return [$sendingAccountTrnx, $receivingAccountTrnx];
         });
 
-        return response()->json(['message' => 'successfull']);
+        $transactions;
+        RecordTransactionWithGovtJob::dispatchAfterResponse($transactions);
+
+        return response()->json(['message' => 'successfull', 'data' => $transactions[0]]);
     }
 
     public function forceDelete(string|int $account)

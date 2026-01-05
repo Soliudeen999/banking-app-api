@@ -21,9 +21,9 @@ return new class extends Migration
             $table->string('reference')->unique();
             $table->text('narration')->nullable();
             $table->string('status')->default('pending'); // pending, completed, failed
-            $table->string('to_account_number', 20);
-            $table->string('to_bank_name', 100);
-            $table->string('to_account_name', 150);
+            $table->string('related_account_number', 20)->nullable();
+            $table->string('related_bank_code', 100)->nullable();
+            $table->string('related_account_name', 150)->nullable();
             $table->timestamps();
         });
     }

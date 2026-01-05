@@ -13,16 +13,15 @@ return new class extends Migration
     {
         Schema::create('govt_transactions', function (Blueprint $table) {
             $table->id();
-            $table->string('reference')->unique();
-            $table->string('from_acct_number');
-            $table->string('from_bank_code');
-
-            $table->string('to_acct_number');
-            $table->string('to_bank_code');
-
+            $table->string('reference')->unique()->index();
+            $table->string('account_number');
+            $table->string('bank_code');
+            $table->string('related_account_number', 20)->nullable();
+            $table->string('related_bank_code', 100)->nullable();
+            $table->string('type'); // e.g., debit, credit
             $table->decimal('amount', 15, 2);
-            $table->string('status'); // receievd/sent/acknowledge
-            $table->text('narration')->nullable();
+            $table->string('status'); // received/sent/acknowledge
+            $table->string('narration')->nullable();
             $table->timestamps();
         });
     }
