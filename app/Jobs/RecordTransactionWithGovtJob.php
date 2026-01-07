@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Models\AccountTransaction;
 use App\Models\GovtTransaction;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -33,9 +32,9 @@ class RecordTransactionWithGovtJob implements ShouldQueue
             'related_bank_code' => $transaction->related_bank_code,
             'amount' => $transaction->amount,
             'status' => $transaction->status,
+            'gen_reference' => $transaction->gen_reference,
         ])->toArray();
 
-        logger()->info('Recording govt transactions', $dataToSave);
         GovtTransaction::insert($dataToSave);
     }
 }

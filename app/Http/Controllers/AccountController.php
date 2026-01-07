@@ -108,11 +108,12 @@ class AccountController extends Controller
                 'credits' => $destinationAccount->credits + $data['amount']
             ]);
 
-            // Register the transaction with NIBSS..
+            $genReference = uniqid(prefix: 'gen_' . '001122' . $account->id, more_entropy: true);
 
             $sendingAccountTrnx = $account->transactions()->create([
                 'type' => 'debit',
                 'reference' => uniqid(prefix: 'txn_' . '001122', more_entropy: true),
+                'gen_reference' => $genReference,
                 'amount' => $data['amount'],
                 'balance_before' => $mainBalance,
                 'balance_after' => $account->main_balance, // The new balance is here after update
@@ -126,6 +127,7 @@ class AccountController extends Controller
             $receivingAccountTrnx = AccountTransaction::create([
                 'account_id' => $destinationAccount->id,
                 'reference' => uniqid(prefix: 'txn_' . '001122' . $destinationAccount->id, more_entropy: true),
+                'gen_reference' => $genReference,
                 'type' => 'credit',
                 'balance_before' => $destinationAccount->main_balance - $data['amount'],
                 'balance_after' => $destinationAccount->main_balance,
@@ -140,7 +142,6 @@ class AccountController extends Controller
             return [$sendingAccountTrnx, $receivingAccountTrnx];
         });
 
-        $transactions;
         RecordTransactionWithGovtJob::dispatchAfterResponse($transactions);
 
         return response()->json(['message' => 'successfull', 'data' => $transactions[0]]);

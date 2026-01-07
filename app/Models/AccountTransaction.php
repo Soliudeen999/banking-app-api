@@ -16,6 +16,7 @@ class AccountTransaction extends Model
         'balance_after',
         'narration',
         'reference',
+        'gen_reference',
         'status',
         'related_account_number',
         'related_bank_code',

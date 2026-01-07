@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('govt_transactions', function (Blueprint $table) {
             $table->id();
             $table->string('reference')->unique()->index();
+            $table->string('gen_reference')->nullable()->index();
             $table->string('account_number');
             $table->string('bank_code');
             $table->string('related_account_number', 20)->nullable();

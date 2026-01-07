@@ -8,6 +8,7 @@ class GovtTransaction extends Model
 {
     protected $fillable = [
         'reference',
+        'gen_reference',
         'account_number',
         'bank_code',
         'narration',

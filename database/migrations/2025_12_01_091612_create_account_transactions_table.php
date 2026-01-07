@@ -18,7 +18,8 @@ return new class extends Migration
             $table->decimal('amount', 15, 2);
             $table->decimal('balance_before', 15, 2);
             $table->decimal('balance_after', 15, 2);
-            $table->string('reference')->unique();
+            $table->string('reference')->unique()->index();
+            $table->string('gen_reference')->nullable()->index();
             $table->text('narration')->nullable();
             $table->string('status')->default('pending'); // pending, completed, failed
             $table->string('related_account_number', 20)->nullable();
