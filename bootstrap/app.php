@@ -31,5 +31,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 400);
             }
 
+            if ($exception instanceof InvalidArgumentException) {
+                return response()->json([
+                    'message' => $exception->getMessage(),
+                ], 400);
+            }
+
         });
     })->create();

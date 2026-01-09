@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\TransactionHelper;
 use App\Http\Requests\Account\IntraBankTransferRequest;
 use App\Http\Requests\Account\StoreAccountRequest;
 use App\Jobs\RecordTransactionWithGovtJob;
@@ -89,6 +90,11 @@ class AccountController extends Controller
 
     public function intraBankTransfer(IntraBankTransferRequest $request, Account $account): JsonResponse
     {
+        TransactionHelper::verifyUserPin(
+            $account->user,
+            $request->validated('pin')
+        );
+
         $data = $request->validated();
 
         $transactions = DB::transaction(function() use ($data, $account) {

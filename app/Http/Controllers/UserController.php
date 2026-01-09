@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\User\SetTransactionPinRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -21,19 +22,27 @@ class UserController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
      * Display the specified resource.
      */
     public function show(string $id)
     {
         //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function setTransaction(SetTransactionPinRequest $request)
+    {
+        $pin = $request->validated('transaction_pin');
+
+        $user = Auth::user();
+        $user->trnx_pin = bcrypt($pin);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Transaction PIN set successfully',
+        ]);
     }
 
     /**

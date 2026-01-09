@@ -39,6 +39,7 @@ class IntraBankTransferRequest extends FormRequest
                 Rule::unless($maxTransferrableAmount == 0, ['max:'.$maxTransferrableAmount]),
             ],
             'account_number' => ['required', 'min:10', 'string', 'max:10', 'exists:accounts,account_number'],
+            'pin' => ['required', 'string', 'size:4'],
         ];
     }
 
