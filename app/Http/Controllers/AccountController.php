@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\TransactionHelper;
+use App\Http\Requests\Account\CashDepositRequest;
 use App\Http\Requests\Account\IntraBankTransferRequest;
 use App\Http\Requests\Account\StoreAccountRequest;
 use App\Jobs\RecordTransactionWithGovtJob;
@@ -160,6 +161,50 @@ class AccountController extends Controller
 
         return response()->json([
             'message' => 'Accout deleted tem ',
+        ]);
+    }
+
+
+    public function restore(string|int $account)
+    {
+        $account = Account::query()->onlyTrashed()->findOrFail($account);
+        $account->restore();
+
+        return response()->json([
+            'message' => 'Account restored successfully.',
+        ]);
+    }
+
+    public function cashDeposit(Account $account, CashDepositRequest $request): JsonResponse
+    {
+        $amount = $request->validated('amount');
+
+        $transaction = DB::transaction(function() use ($amount, $account) {
+
+            $account->update([
+                'main_balance' => $account->main_balance + $amount,
+                'ledger_balance' => $account->ledger_balance + $amount,
+                'credits' => $account->credits + $amount
+            ]);
+
+            $transaction = $account->transactions()->create([
+                'type' => 'credit',
+                'reference' => uniqid('txn_' . '001122' . $account->id, true),
+                'gen_reference' => uniqid('gen_' . '001122' . $account->id, true),
+                'amount' => $amount,
+                'balance_before' => $account->main_balance - $amount,
+                'balance_after' => $account->main_balance,
+                'narration' => 'Cash Deposit',
+                'status' => 'completed',
+            ]);
+
+            RecordTransactionWithGovtJob::dispatchAfterResponse($transaction);
+            return $transaction;
+        });
+
+        return response()->json([
+            'message' => 'Cash deposited successfully.',
+            'data' => $transaction
         ]);
     }
 }

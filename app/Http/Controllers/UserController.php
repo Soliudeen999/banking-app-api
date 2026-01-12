@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\User\SetTransactionPinRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -37,7 +38,7 @@ class UserController extends Controller
         $pin = $request->validated('transaction_pin');
 
         $user = Auth::user();
-        $user->trnx_pin = bcrypt($pin);
+        $user->trnx_pin = Hash::make($pin);
         $user->save();
 
         return response()->json([

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\AccountTransaction;
 use App\Models\GovtTransaction;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -13,7 +14,7 @@ class RecordTransactionWithGovtJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public array $transactions){
+    public function __construct(public array|AccountTransaction $transactions){
         //
     }
 
@@ -22,6 +23,10 @@ class RecordTransactionWithGovtJob implements ShouldQueue
      */
     public function handle(): void
     {
+        if(!is_array($this->transactions)){
+            $this->transactions = [$this->transactions];
+        }
+        
         $dataToSave = collect($this->transactions)->map(fn($transaction) => [
             'type' => $transaction->type,
             'reference' => $transaction->reference,

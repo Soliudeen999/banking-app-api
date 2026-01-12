@@ -5,10 +5,8 @@ use App\Http\Controllers\AccountTransactionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureHasTrnxPin;
-use App\Http\Requests\Auth\LoginRequest;
-use App\Models\User;
+use App\Http\Middleware\EnsureIsAdmin;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Validation\ValidationException;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -25,6 +23,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('verified')->group(function () {
         Route::get('/accounts', [AccountController::class, 'index']);
+        Route::post('/accounts/{account}/cash-deposit', [AccountController::class, 'cashDeposit'])
+                ->middleware('ensure.is.admin')
+                ->name('accounts.cash-deposit');
+
         Route::post('/accounts', [AccountController::class, 'store']);
         Route::post('/accounts/{account}/intra-transfer', [AccountController::class, 'intraBankTransfer'])->middleware(EnsureHasTrnxPin::class);
         Route::get('/accounts/{account}', [AccountController::class, 'show']);
