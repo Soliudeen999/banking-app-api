@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountTransactionController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CashDepositController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureHasTrnxPin;
 use App\Http\Middleware\EnsureIsAdmin;
@@ -23,7 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('verified')->group(function () {
         Route::get('/accounts', [AccountController::class, 'index']);
-        Route::post('/accounts/{account}/cash-deposit', [AccountController::class, 'cashDeposit'])
+        Route::post('/accounts/cash-deposit', [CashDepositController::class, 'store'])
                 ->middleware('ensure.is.admin')
                 ->name('accounts.cash-deposit');
 

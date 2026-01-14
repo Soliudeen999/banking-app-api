@@ -174,37 +174,4 @@ class AccountController extends Controller
             'message' => 'Account restored successfully.',
         ]);
     }
-
-    public function cashDeposit(Account $account, CashDepositRequest $request): JsonResponse
-    {
-        $amount = $request->validated('amount');
-
-        $transaction = DB::transaction(function() use ($amount, $account) {
-
-            $account->update([
-                'main_balance' => $account->main_balance + $amount,
-                'ledger_balance' => $account->ledger_balance + $amount,
-                'credits' => $account->credits + $amount
-            ]);
-
-            $transaction = $account->transactions()->create([
-                'type' => 'credit',
-                'reference' => uniqid('txn_' . '001122' . $account->id, true),
-                'gen_reference' => uniqid('gen_' . '001122' . $account->id, true),
-                'amount' => $amount,
-                'balance_before' => $account->main_balance - $amount,
-                'balance_after' => $account->main_balance,
-                'narration' => 'Cash Deposit',
-                'status' => 'completed',
-            ]);
-
-            RecordTransactionWithGovtJob::dispatchAfterResponse($transaction);
-            return $transaction;
-        });
-
-        return response()->json([
-            'message' => 'Cash deposited successfully.',
-            'data' => $transaction
-        ]);
-    }
 }
