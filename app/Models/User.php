@@ -84,3 +84,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $query->where('email', $email);
     }
 }
+
+
+// Create a Model and Migration for Categories.
+// Implement the CRUD operation for it and register the enpoints...

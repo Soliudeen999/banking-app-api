@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AccountTransactionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CashDepositController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureHasTrnxPin;
 use App\Http\Middleware\EnsureIsAdmin;
@@ -16,6 +17,13 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/resend-password-reset-otp', [AuthController::class, 'forgetPassword']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('categories', CategoryController::class)->middlewareFor([
+        'store',
+        'show',
+        'update',
+        'destroy'
+    ], EnsureIsAdmin::class);
+
     Route::put('/resend-verification', [AuthController::class, 'resendVerificationCode']);
     Route::post('/verify-email', [AuthController::class, 'verifyEmail'])->name('verification.verify');
     Route::get('/me', [UserController::class, 'currentUser'])->name('user.me');

@@ -21,6 +21,7 @@ class AccountTransaction extends Model
         'related_account_number',
         'related_bank_code',
         'related_account_name',
+        'category_id',
     ];
 
     public function sourceAccount(): BelongsTo

@@ -129,6 +129,7 @@ class AccountController extends Controller
                 'related_account_number' => $destinationAccount->account_number,
                 'related_bank_code' => '001122',
                 'related_account_name' => $destinationAccount->user->name,
+                'category_id' => $data['category_id'] ?? null,
             ]);
 
             $receivingAccountTrnx = AccountTransaction::create([

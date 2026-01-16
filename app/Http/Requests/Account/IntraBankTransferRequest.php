@@ -40,6 +40,7 @@ class IntraBankTransferRequest extends FormRequest
             ],
             'account_number' => ['required', 'min:10', 'string', 'max:10', 'exists:accounts,account_number'],
             'pin' => ['required', 'string', 'size:4'],
+            'category_id' => ['sometimes', 'exists:categories,id'],
         ];
     }
 
