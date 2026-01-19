@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\TransactionHelper;
-use App\Http\Requests\Account\CashDepositRequest;
 use App\Http\Requests\Account\IntraBankTransferRequest;
 use App\Http\Requests\Account\StoreAccountRequest;
+use App\Http\Resources\Transaction\TransactionResource;
 use App\Jobs\RecordTransactionWithGovtJob;
 use App\Models\Account;
 use App\Models\AccountTransaction;
+use App\Models\GovtAccount;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -60,6 +61,15 @@ class AccountController extends Controller
 
         $account = Account::create($data);
 
+        GovtAccount::create([
+            'account_number' => $accountNo,
+            'bank_code' => '001122',
+            'account_name' => $account->user->name,
+            'balance' => 0,
+            'status' => 'active',
+            'account_type' => $data['type'],
+        ]);
+
         return response()->json([
             'message' => 'Account Created Successfully',
             'data' => $account,
@@ -107,13 +117,10 @@ class AccountController extends Controller
                 'debits' => $account->debits + $data['amount']
             ]);
 
-            $destinationAccount = Account::where('account_number', '=', $data['account_number'])->first();
-
-            $destinationAccount->update([
-                'main_balance' => $destinationAccount->main_balance + $data['amount'],
-                'ledger_balance' => $destinationAccount->ledger_balance + $data['amount'],
-                'credits' => $destinationAccount->credits + $data['amount']
-            ]);
+            $destinationAccountWithGovt = GovtAccount::query()
+                        ->where('account_number', '=', $data['account_number'])
+                        ->where('bank_code', '=', $data['bank_code'])
+                        ->first();
 
             $genReference = uniqid(prefix: 'gen_' . '001122' . $account->id, more_entropy: true);
 
@@ -126,10 +133,26 @@ class AccountController extends Controller
                 'balance_after' => $account->main_balance, // The new balance is here after update
                 'narration' => $data['narration'] ?? 'Intra bank transfer',
                 'status' => 'completed',
-                'related_account_number' => $destinationAccount->account_number,
-                'related_bank_code' => '001122',
-                'related_account_name' => $destinationAccount->user->name,
+                'related_account_number' => $data['account_number'],
+                'related_bank_code' => $data['bank_code'],
+                'related_account_name' => $destinationAccountWithGovt->account_name,
                 'category_id' => $data['category_id'] ?? null,
+            ]);
+
+            if($data['bank_code'] !== '001122'){
+                return [$sendingAccountTrnx];
+            }
+
+            $destinationAccount = Account::with(['user'])->where('account_number', $data['account_number'])->first();
+
+            $destinationAccount->update([
+                'main_balance' => $destinationAccount->main_balance + $data['amount'],
+                'ledger_balance' => $destinationAccount->ledger_balance + $data['amount'],
+                'credits' => $destinationAccount->credits + $data['amount']
+            ]);
+
+            $destinationAccountWithGovt->update([
+                'balance' => $destinationAccountWithGovt->balance + $data['amount'],
             ]);
 
             $receivingAccountTrnx = AccountTransaction::create([
@@ -152,7 +175,10 @@ class AccountController extends Controller
 
         RecordTransactionWithGovtJob::dispatchAfterResponse($transactions);
 
-        return response()->json(['message' => 'successfull', 'data' => $transactions[0]]);
+        return response()->json([
+            'message' => 'successfull',
+            'data' => TransactionResource::make($transactions[0])
+        ]);
     }
 
     public function forceDelete(string|int $account)

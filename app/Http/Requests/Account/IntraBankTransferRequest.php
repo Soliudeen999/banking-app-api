@@ -38,10 +38,21 @@ class IntraBankTransferRequest extends FormRequest
                 'min:10',
                 Rule::unless($maxTransferrableAmount == 0, ['max:'.$maxTransferrableAmount]),
             ],
-            'account_number' => ['required', 'min:10', 'string', 'max:10', 'exists:accounts,account_number'],
+            'account_number' => ['required', 'min:10', 'string', 'max:10', Rule::exists('govt_accounts', 'account_number')->where(function ($query) {
+                $query->where('bank_code', $this->input('bank_code'));
+            })],
             'pin' => ['required', 'string', 'size:4'],
             'category_id' => ['sometimes', 'exists:categories,id'],
+            'bank_code' => ['required', 'string', 'exists:banks,code'],
+            'narration' => ['sometimes', 'string', 'max:500'],
         ];
+    }
+
+    public function prepareForValidation()
+    {
+        $this->mergeIfMissing([
+            'bank_code' => '001122',
+        ]);
     }
 
     public function after(): array
